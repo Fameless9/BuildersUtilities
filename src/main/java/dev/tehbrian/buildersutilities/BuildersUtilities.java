@@ -11,7 +11,7 @@ import dev.tehbrian.buildersutilities.ability.AdvancedFlyListener;
 import dev.tehbrian.buildersutilities.ability.DoubleSlabListener;
 import dev.tehbrian.buildersutilities.ability.GlazedTerracottaListener;
 import dev.tehbrian.buildersutilities.ability.IronDoorListener;
-import dev.tehbrian.buildersutilities.ability.NoclipManager;
+import dev.tehbrian.buildersutilities.ability.NoClipManager;
 import dev.tehbrian.buildersutilities.armorcolor.ArmorColorMenuListener;
 import dev.tehbrian.buildersutilities.banner.menu.BaseMenuListener;
 import dev.tehbrian.buildersutilities.banner.menu.ColorMenuListener;
@@ -86,7 +86,7 @@ public final class BuildersUtilities extends TehPlugin {
     this.initListeners();
     this.initRestrictions();
 
-    this.injector.getInstance(NoclipManager.class).start();
+    this.injector.getInstance(NoClipManager.class).start();
   }
 
   /**
@@ -203,7 +203,8 @@ public final class BuildersUtilities extends TehPlugin {
         this.injector.getInstance(DoubleSlabListener.class),
         this.injector.getInstance(GlazedTerracottaListener.class),
         this.injector.getInstance(IronDoorListener.class),
-        this.injector.getInstance(SettingsListener.class)
+        this.injector.getInstance(SettingsListener.class),
+        this.injector.getInstance(NoClipManager.class)
     );
   }
 
@@ -216,5 +217,4 @@ public final class BuildersUtilities extends TehPlugin {
 
     loader.load(this.injector.getInstance(SpigotRestrictionHelper.class));
   }
-
 }

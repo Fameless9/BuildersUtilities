@@ -1,4 +1,4 @@
-rootProject.name = "buildersutilities"
+rootProject.name = "BuildersUtilities"
 
 pluginManagement {
   repositories {
