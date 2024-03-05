@@ -27,16 +27,13 @@ public final class NoClipManager implements Listener {
   private final List<UUID> playersOnNoClip = new ArrayList<>();
 
   @Inject
-  public NoClipManager(
-      final BuildersUtilities buildersUtilities,
-      final UserService userService
-  ) {
+  public NoClipManager(final BuildersUtilities buildersUtilities, final UserService userService) {
     this.buildersUtilities = buildersUtilities;
     this.userService = userService;
   }
 
   public void start() {
-    Bukkit.getScheduler().runTaskTimer(this.buildersUtilities, this::checkForBlocks, 0, 1);
+    Bukkit.getScheduler().runTaskTimer(this.buildersUtilities, this::checkForUpdates, 0, 1);
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -48,52 +45,37 @@ public final class NoClipManager implements Listener {
     this.previousGameMode.put(event.getPlayer().getUniqueId(), event.getNewGameMode());
   }
 
-  @SuppressWarnings("deprecation") // <- no alternative to Player#isOnGround
-  private void checkForBlocks() {
+  private void checkForUpdates() {
     for (final User user : this.userService.getUserMap().values()) {
       if (!this.isEligible(user)) {
         continue;
       }
 
       final Player player = user.getPlayer();
-      assert player != null;
-      // ^ null-checked in isEligible(user)
+      assert player != null; // <- null-checked in isEligible(user)
       final UUID uuid = user.getPlayer().getUniqueId();
+      final boolean noClip = this.shouldNoClip(player);
 
-      final boolean isOnGround = player.isOnGround();
-      final boolean noClip;
-      boolean tp = false;
-
-      if (!this.playersOnNoClip.contains(uuid)) {
-        if (isOnGround && player.isSneaking()) {
-          noClip = true;
-        } else {
-          noClip = this.shouldNoClip(player);
-          tp = isOnGround;
-        }
-
-        if (!noClip) {
-          continue;
-        }
-
+      if (!this.playersOnNoClip.contains(uuid) && noClip) {
         this.previousGameMode.put(uuid, player.getGameMode());
         this.playersOnNoClip.add(uuid);
         player.setGameMode(GameMode.SPECTATOR);
-        if (tp) {
-          player.teleport(player.getLocation());
-        }
-        continue;
-      }
-      if (isOnGround || this.shouldNoClip(player)) {
         continue;
       }
 
-      player.setGameMode(this.previousGameMode.getOrDefault(uuid, GameMode.CREATIVE));
-      this.playersOnNoClip.remove(uuid);
+      if (!noClip) {
+        player.setGameMode(this.previousGameMode.getOrDefault(uuid, GameMode.CREATIVE));
+        this.playersOnNoClip.remove(uuid);
+      }
     }
   }
 
+  @SuppressWarnings("deprecation") // <- no alternative to Player#isOnGround
   private boolean shouldNoClip(final Player player) {
+    if (player.isSneaking() && player.isOnGround()) {
+      return true;
+    }
+
     final Location playerLocation = player.getLocation();
     final double checkRadius = 0.4;
 
@@ -103,8 +85,8 @@ public final class NoClipManager implements Listener {
         final Location checkLocation2 = playerLocation.clone().add(x, 1, z);
         final Location checkLocation3 = playerLocation.clone().add(x, 1.9, z);
         if (checkLocation1.getBlock().getType().isCollidable()
-          || checkLocation2.getBlock().getType().isCollidable()
-          || checkLocation3.getBlock().getType().isCollidable()) {
+            || checkLocation2.getBlock().getType().isCollidable()
+            || checkLocation3.getBlock().getType().isCollidable()) {
           return true;
         }
       }
