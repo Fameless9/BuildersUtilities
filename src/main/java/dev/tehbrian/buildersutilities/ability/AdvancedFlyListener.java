@@ -23,18 +23,15 @@ public final class AdvancedFlyListener implements Listener {
   private final HashMap<Player, Double> lastVelocity = new HashMap<>();
 
   @Inject
-  public AdvancedFlyListener(
-      final UserService userService
-  ) {
+  public AdvancedFlyListener(final UserService userService) {
     this.userService = userService;
   }
 
   @EventHandler(priority = EventPriority.LOWEST)
   public void onPlayerMove(final PlayerMoveEvent event) {
     final Player player = event.getPlayer();
-    if (!this.userService.getUser(player).advancedFlyEnabled()
-        || !player.hasPermission(Permissions.ADVANCED_FLY)
-        || !player.isFlying()) {
+
+    if (!isEligible(player)) {
       return;
     }
 
@@ -74,6 +71,12 @@ public final class AdvancedFlyListener implements Listener {
       this.lastVelocity.put(player, speed);
       this.slower.remove(player);
     }
+  }
+
+  private boolean isEligible(Player player) {
+    return this.userService.getUser(player).advancedFlyEnabled()
+        && player.hasPermission(Permissions.ADVANCED_FLY)
+        && player.isFlying();
   }
 
 }

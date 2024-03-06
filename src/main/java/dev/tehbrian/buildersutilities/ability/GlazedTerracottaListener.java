@@ -28,33 +28,18 @@ public final class GlazedTerracottaListener implements Listener {
   private final SpigotRestrictionHelper restrictionHelper;
 
   @Inject
-  public GlazedTerracottaListener(
-      final UserService userService,
-      final SpigotRestrictionHelper restrictionHelper
-  ) {
+  public GlazedTerracottaListener(final UserService userService, final SpigotRestrictionHelper restrictionHelper) {
     this.userService = userService;
     this.restrictionHelper = restrictionHelper;
   }
 
   @EventHandler(ignoreCancelled = true)
   public void onGlazedTerracottaInteract(final PlayerInteractEvent event) {
+
     final Player player = event.getPlayer();
-
-    if (!this.userService.getUser(player).glazedTerracottaRotateEnabled()
-        || !player.hasPermission(Permissions.GLAZED_TERRACOTTA_ROTATE)) {
-      return;
-    }
-
     final Block block = Objects.requireNonNull(event.getClickedBlock());
 
-    if (!MaterialTags.GLAZED_TERRACOTTA.isTagged(block)
-        || player.getInventory().getItemInMainHand().getType() != Material.AIR
-        || event.getAction() != Action.RIGHT_CLICK_BLOCK
-        || event.getHand() != EquipmentSlot.HAND
-        || player.getGameMode() != GameMode.CREATIVE
-        || !player.isSneaking()
-        || !this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.BREAK)
-        || !this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.PLACE)) {
+    if (!isEligible(player, block, event.getAction(), event.getHand())) {
       return;
     }
 
@@ -66,6 +51,7 @@ public final class GlazedTerracottaListener implements Listener {
       case WEST -> BlockFace.NORTH;
       default -> directional.getFacing(); // do nothing.
     });
+
     block.setBlockData(directional);
 
     block.getWorld().playSound(
@@ -80,4 +66,17 @@ public final class GlazedTerracottaListener implements Listener {
     event.setCancelled(true);
   }
 
+  private boolean isEligible(Player player, Block block, Action action, EquipmentSlot equipmentSlot) {
+    return this.userService.getUser(player).glazedTerracottaRotateEnabled()
+        && MaterialTags.GLAZED_TERRACOTTA.isTagged(block)
+        && player.getInventory().getItemInMainHand().getType() == Material.AIR
+        && action == Action.RIGHT_CLICK_BLOCK
+        && equipmentSlot == EquipmentSlot.HAND
+        && player.getGameMode() == GameMode.CREATIVE
+        && player.isSneaking()
+        && this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.BREAK)
+        && this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.PLACE)
+        && this.userService.getUser(player).glazedTerracottaRotateEnabled()
+        && player.hasPermission(Permissions.GLAZED_TERRACOTTA_ROTATE);
+  }
 }

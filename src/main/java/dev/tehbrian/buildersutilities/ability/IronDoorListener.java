@@ -35,10 +35,7 @@ public final class IronDoorListener implements Listener {
   private final SpigotRestrictionHelper restrictionHelper;
 
   @Inject
-  public IronDoorListener(
-      final UserService userService,
-      final SpigotRestrictionHelper restrictionHelper
-  ) {
+  public IronDoorListener(final UserService userService, final SpigotRestrictionHelper restrictionHelper) {
     this.userService = userService;
     this.restrictionHelper = restrictionHelper;
   }
@@ -53,29 +50,21 @@ public final class IronDoorListener implements Listener {
     }
 
     final Block block = Objects.requireNonNull(event.getClickedBlock());
-    final Material blockType = block.getType();
 
-    if ((blockType != Material.IRON_DOOR && blockType != Material.IRON_TRAPDOOR)
-        || player.getInventory().getItemInMainHand().getType() != Material.AIR
-        || event.getAction() != Action.RIGHT_CLICK_BLOCK
-        || event.getHand() != EquipmentSlot.HAND
-        || player.getGameMode() != GameMode.CREATIVE
-        || !this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.BREAK)
-        || !this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.PLACE)) {
+    if (!isEligible(player, block, event.getAction(), event.getHand())) {
       return;
     }
 
     final Openable door = (Openable) block.getBlockData();
     final boolean willOpen = !door.isOpen();
+
     door.setOpen(willOpen);
     block.setBlockData(door);
 
-    final Sound sound;
-    if (blockType.equals(Material.IRON_DOOR)) {
-      sound = willOpen ? Sound.BLOCK_IRON_DOOR_OPEN : Sound.BLOCK_IRON_DOOR_CLOSE;
-    } else { // type is iron trapdoor.
-      sound = willOpen ? Sound.BLOCK_IRON_TRAPDOOR_OPEN : Sound.BLOCK_IRON_TRAPDOOR_CLOSE;
-    }
+    final Sound sound = block.getType().equals(Material.IRON_DOOR) ?
+        willOpen ? Sound.BLOCK_IRON_DOOR_OPEN : Sound.BLOCK_IRON_DOOR_CLOSE :
+        willOpen ? Sound.BLOCK_IRON_TRAPDOOR_OPEN : Sound.BLOCK_IRON_TRAPDOOR_CLOSE;
+
     block.getWorld().playSound(
         block.getLocation(), sound,
         SoundCategory.BLOCKS,
@@ -87,4 +76,13 @@ public final class IronDoorListener implements Listener {
     event.setCancelled(true);
   }
 
+  private boolean isEligible(Player player, Block block, Action action, EquipmentSlot equipmentSlot) {
+    return (block.getType() == Material.IRON_DOOR || block.getType() == Material.IRON_TRAPDOOR)
+        && player.getInventory().getItemInMainHand().getType() == Material.AIR
+        && action == Action.RIGHT_CLICK_BLOCK
+        && equipmentSlot == EquipmentSlot.HAND
+        && player.getGameMode() == GameMode.CREATIVE
+        && this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.BREAK)
+        && this.restrictionHelper.checkRestrictions(player, block.getLocation(), ActionType.PLACE);
+  }
 }

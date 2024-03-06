@@ -77,16 +77,30 @@ public final class NoClipManager implements Listener {
     }
 
     final Location playerLocation = player.getLocation();
-    final double checkRadius = 0.4;
 
-    for (double x = -checkRadius; x <= checkRadius; x += 0.1) {
-      for (double z = -checkRadius; z <= checkRadius; z += 0.1) {
-        final Location checkLocation1 = playerLocation.clone().add(x, 0, z);
-        final Location checkLocation2 = playerLocation.clone().add(x, 1, z);
-        final Location checkLocation3 = playerLocation.clone().add(x, 1.9, z);
-        if (checkLocation1.getBlock().getType().isCollidable()
-            || checkLocation2.getBlock().getType().isCollidable()
-            || checkLocation3.getBlock().getType().isCollidable()) {
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 4; j++) {
+        boolean negative = i == 0;
+        boolean ignoreX = j == 0 || j == 3;
+        boolean ignoreZ = j == 1 || j == 3;
+
+        final boolean checkLocation1 = playerLocation
+            .clone()
+            .add(ignoreX ? 0 : negative ? -0.4 : 0.4, 0, ignoreZ ? 0 : negative ? 0.4 : -0.4)
+            .getBlock()
+            .isCollidable();
+        final boolean checkLocation2 = playerLocation
+            .clone()
+            .add(ignoreX ? 0 : negative ? -0.4 : 0.4, 1, ignoreZ ? 0 : negative ? 0.4 : -0.4)
+            .getBlock()
+            .isCollidable();
+        final boolean checkLocation3 = playerLocation
+            .clone()
+            .add(ignoreX ? 0 : negative ? -0.4 : 0.4, 1.9, ignoreZ ? 0 : negative ? 0.4 : -0.4)
+            .getBlock()
+            .isCollidable();
+
+        if (checkLocation1 || checkLocation2 || checkLocation3) {
           return true;
         }
       }

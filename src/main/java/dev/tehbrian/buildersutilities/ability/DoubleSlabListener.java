@@ -23,9 +23,7 @@ public final class DoubleSlabListener implements Listener {
   private final UserService userService;
 
   @Inject
-  public DoubleSlabListener(
-      final UserService userService
-  ) {
+  public DoubleSlabListener(final UserService userService) {
     this.userService = userService;
   }
 
@@ -50,17 +48,9 @@ public final class DoubleSlabListener implements Listener {
   public void onDoubleSlabBreak(final BlockBreakEvent event) {
     final Player player = event.getPlayer();
     final Block block = event.getBlock();
-
-    if (!this.userService.getUser(player).doubleSlabBreakEnabled()
-        || !player.hasPermission(Permissions.DOUBLE_SLAB_BREAK)
-        || !Tag.SLABS.isTagged(player.getInventory().getItemInMainHand().getType())
-        || player.getGameMode() != GameMode.CREATIVE
-        || !Tag.SLABS.isTagged(block.getType())) {
-      return;
-    }
-
     final Slab blockData = (Slab) block.getBlockData();
-    if (blockData.getType() != Slab.Type.DOUBLE) {
+
+    if (!isEligible(player, block, blockData)) {
       return;
     }
 
@@ -74,9 +64,17 @@ public final class DoubleSlabListener implements Listener {
     event.setCancelled(true);
   }
 
+  private boolean isEligible(Player player, Block block, Slab data) {
+    return data.getType().equals(Slab.Type.DOUBLE)
+        && this.userService.getUser(player).doubleSlabBreakEnabled()
+        && player.hasPermission(Permissions.DOUBLE_SLAB_BREAK)
+        && Tag.SLABS.isTagged(player.getInventory().getItemInMainHand().getType())
+        && player.getGameMode() == GameMode.CREATIVE
+        && Tag.SLABS.isTagged(block.getType());
+  }
+
   public enum Half {
     TOP,
     BOTTOM,
   }
-
 }
